@@ -32,12 +32,22 @@ comments = FOREACH rawComments GENERATE
         (chararray)json#'subreddit_id' as subreddit_id;
         --(chararray)json#'distinguished' as distinguished,
 
-commentsBySubreddit = GROUP comments by (subreddit_id, subreddit);
+-- Filter out incomplete records
+comments = FILTER comments
+    BY (score_hidden IS NULL OR score_hidden != true)
+        AND (author IS NOT NULL)
+        AND (body IS NOT NULL)
+        AND (score IS NOT NULL)
+        AND (subreddit IS NOT NULL)
+        AND (subreddit_id IS NOT NULL);
+
+commentsBySubreddit = GROUP comments BY (subreddit_id, subreddit);
 
 subredditStats = FOREACH commentsBySubreddit {
     gildedComments = FILTER comments BY gilded > 0;
     commentAuthors = FOREACH comments GENERATE author;
     commentors = DISTINCT commentAuthors;
+
     GENERATE
         SUM(comments.score) as totalScore,
         AVG(comments.score) as averageScore,
