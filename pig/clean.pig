@@ -41,8 +41,9 @@ subredditStats = FOREACH commentsBySubreddit {
     GENERATE
         SUM(comments.score) as totalScore,
         AVG(comments.score) as averageScore,
-        COUNT(gildedComments) as totalGilded,
         -- I don't understand why using .score works, but without, it fails
+        COUNT(gildedComments.score) as totalGilded,
         COUNT(comments.score) as commentCount,
+
         commentors as commentors;
 }
