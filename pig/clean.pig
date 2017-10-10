@@ -1,13 +1,14 @@
-register elephantbird/json-simple-1.1.1.jar;
-register elephantbird/elephant-bird-pig-4.15.jar;
-register elephantbird/elephant-bird-hadoop-compat-4.15.jar;
+register pig/elephantbird/json-simple-1.1.1.jar;
+register pig/elephantbird/elephant-bird-pig-4.15.jar;
+register pig/elephantbird/elephant-bird-hadoop-compat-4.15.jar;
+register pig/piggybank/piggybank.jar;
 
 DEFINE JsonLoader com.twitter.elephantbird.pig.load.JsonLoader('-nestedLoad');
 
-rawComments = LOAD 'RC_2005-12' USING JsonLoader as (json:map[]);
+rawComments = LOAD '$inFile' USING JsonLoader as (json:map[]);
 
 -- Extract proper Pig schema from elephant-bird
-comments = FOREACH rawComments GENERATE
+comments = FOREACH rawComments GENERATE1
         (chararray)json#'approved_by' as approved_by,
         (chararray)json#'author' as author,
         --(chararray)json#'author_flair_css_class' as author_flair_css_class,
@@ -15,7 +16,7 @@ comments = FOREACH rawComments GENERATE
         (chararray)json#'banned_by' as banned_by,
         (chararray)json#'body' as body,
         (chararray)json#'body_html' as body_html,
-        ToDate(1000 * (long)json#'created_utc') as created_on,
+        ToDate(1000 * (long)json#'created_utc') as created_on,        
         (chararray)json#'edited' as edited,
         (int)json#'gilded' as gilded,
         --(boolean)json#'likes' as likes,
@@ -42,12 +43,14 @@ comments = FILTER comments
         AND (subreddit IS NOT NULL)
         AND (subreddit_id IS NOT NULL);
 
-commentsBySubreddit = GROUP comments BY (subreddit_id, subreddit);
-
 commentAuthors = FOREACH comments GENERATE author;
 groupedAuthors = GROUP commentAuthors BY author;
 commentorsCounts = FOREACH groupedAuthors
     GENERATE group, COUNT(commentAuthors) AS numComments;
+
+commentsByDay = GROUP comments BY GetDay(created_on);
+
+commentsBySubreddit = GROUP comments BY (subreddit, subreddit_id);
 
 subredditStats = FOREACH commentsBySubreddit {
     gildedComments = FILTER comments BY gilded > 0;
@@ -64,3 +67,5 @@ subredditStats = FOREACH commentsBySubreddit {
         commentors.author as commentors;
 }
 
+STORE commentsByDay INTO '$outFolder'
+    USING org.apache.pig.piggybank.storage.MultiStorage('$outFolder', '0', 'bz2', '\\t');
