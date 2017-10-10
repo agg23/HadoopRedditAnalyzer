@@ -21,11 +21,11 @@ function generateOutput {
         exit 1
     fi
 
-    for day in {1..31}
-    do
-        hadoop fs -mv "$hiveDirectory/$day" "$hiveDirectory/day=$day" \
-               1> /dev/null 2> /dev/null
-    done
+    # for day in {1..31}
+    # do
+    #     hadoop fs -mv "$hiveDirectory/$day" "$hiveDirectory/day=$day" \
+    #            1> /dev/null 2> /dev/null
+    # done
 
     exit 0
 }

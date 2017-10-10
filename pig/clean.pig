@@ -1,7 +1,6 @@
 register pig/elephantbird/json-simple-1.1.1.jar;
 register pig/elephantbird/elephant-bird-pig-4.15.jar;
 register pig/elephantbird/elephant-bird-hadoop-compat-4.15.jar;
-register pig/piggybank/piggybank.jar;
 
 DEFINE JsonLoader com.twitter.elephantbird.pig.load.JsonLoader('-nestedLoad');
 
@@ -60,29 +59,67 @@ comments = FOREACH comments GENERATE
     score,
     subreddit_id;
 
-commentAuthors = FOREACH comments GENERATE author;
-groupedAuthors = GROUP commentAuthors BY author;
-commentorsCounts = FOREACH groupedAuthors
-    GENERATE group, COUNT(commentAuthors) AS numComments;
+SPLIT comments INTO
+    day1  IF day == 1,
+    day2  IF day == 2,
+    day3  IF day == 3,
+    day4  IF day == 4,
+    day5  IF day == 5,
+    day6  IF day == 6,
+    day7  IF day == 7,
+    day8  IF day == 8,
+    day9  IF day == 9,
+    day10 IF day == 10,
+    day11 IF day == 11,
+    day12 IF day == 12,
+    day13 IF day == 13,
+    day14 IF day == 14,
+    day15 IF day == 15,
+    day16 IF day == 16,
+    day17 IF day == 17,
+    day18 IF day == 18,
+    day19 IF day == 19,
+    day20 IF day == 20,
+    day21 IF day == 21,
+    day22 IF day == 22,
+    day23 IF day == 23,
+    day24 IF day == 24,
+    day25 IF day == 25,
+    day26 IF day == 26,
+    day27 IF day == 27,
+    day28 IF day == 28,
+    day29 IF day == 29,
+    day30 IF day == 30,
+    day31 IF day == 31;
 
-commentsByDay = GROUP comments BY day;
-
-commentsBySubreddit = GROUP comments BY (subreddit, subreddit_id);
-
-subredditStats = FOREACH commentsBySubreddit {
-    gildedComments = FILTER comments BY gilded > 0;
-
-    commentAuthors = FOREACH comments GENERATE author;
-    commentors = DISTINCT commentAuthors;
-
-    GENERATE
-        SUM(comments.score) as totalScore,
-        AVG(comments.score) as averageScore,
-        -- I don't understand why using .score works, but without, it fails
-        COUNT(gildedComments.score) as totalGilded,
-        COUNT(comments.score) as commentCount,
-        commentors.author as commentors;
-}
-
-STORE commentsByDay INTO '$outFolder'
-    USING org.apache.pig.piggybank.storage.MultiStorage('$outFolder', '0', 'none', '');
+STORE day1  INTO '$outFolder/day=1/data.orc'  USING OrcStorage();
+STORE day2  INTO '$outFolder/day=2/data.orc'  USING OrcStorage();
+STORE day3  INTO '$outFolder/day=3/data.orc'  USING OrcStorage();
+STORE day4  INTO '$outFolder/day=4/data.orc'  USING OrcStorage();
+STORE day5  INTO '$outFolder/day=5/data.orc'  USING OrcStorage();
+STORE day6  INTO '$outFolder/day=6/data.orc'  USING OrcStorage();
+STORE day7  INTO '$outFolder/day=7/data.orc'  USING OrcStorage();
+STORE day8  INTO '$outFolder/day=8/data.orc'  USING OrcStorage();
+STORE day9  INTO '$outFolder/day=9/data.orc'  USING OrcStorage();
+STORE day10 INTO '$outFolder/day=10/data.orc' USING OrcStorage();
+STORE day11 INTO '$outFolder/day=11/data.orc' USING OrcStorage();
+STORE day12 INTO '$outFolder/day=12/data.orc' USING OrcStorage();
+STORE day13 INTO '$outFolder/day=13/data.orc' USING OrcStorage();
+STORE day14 INTO '$outFolder/day=14/data.orc' USING OrcStorage();
+STORE day15 INTO '$outFolder/day=15/data.orc' USING OrcStorage();
+STORE day16 INTO '$outFolder/day=16/data.orc' USING OrcStorage();
+STORE day17 INTO '$outFolder/day=17/data.orc' USING OrcStorage();
+STORE day18 INTO '$outFolder/day=18/data.orc' USING OrcStorage();
+STORE day19 INTO '$outFolder/day=19/data.orc' USING OrcStorage();
+STORE day20 INTO '$outFolder/day=20/data.orc' USING OrcStorage();
+STORE day21 INTO '$outFolder/day=21/data.orc' USING OrcStorage();
+STORE day22 INTO '$outFolder/day=22/data.orc' USING OrcStorage();
+STORE day23 INTO '$outFolder/day=23/data.orc' USING OrcStorage();
+STORE day24 INTO '$outFolder/day=24/data.orc' USING OrcStorage();
+STORE day25 INTO '$outFolder/day=25/data.orc' USING OrcStorage();
+STORE day26 INTO '$outFolder/day=26/data.orc' USING OrcStorage();
+STORE day27 INTO '$outFolder/day=27/data.orc' USING OrcStorage();
+STORE day28 INTO '$outFolder/day=28/data.orc' USING OrcStorage();
+STORE day29 INTO '$outFolder/day=29/data.orc' USING OrcStorage();
+STORE day30 INTO '$outFolder/day=30/data.orc' USING OrcStorage();
+STORE day31 INTO '$outFolder/day=31/data.orc' USING OrcStorage();
