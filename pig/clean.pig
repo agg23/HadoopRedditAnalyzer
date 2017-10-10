@@ -15,6 +15,7 @@ comments = FOREACH rawComments GENERATE
         (chararray)json#'banned_by' as banned_by,
         (chararray)json#'body' as body,
         (chararray)json#'body_html' as body_html,
+        ToDate(1000 * (long)json#'created_utc') as created_on,
         (chararray)json#'edited' as edited,
         (int)json#'gilded' as gilded,
         --(boolean)json#'likes' as likes,
