@@ -43,8 +43,14 @@ comments = FILTER comments
 
 commentsBySubreddit = GROUP comments BY (subreddit_id, subreddit);
 
+commentAuthors = FOREACH comments GENERATE author;
+groupedAuthors = GROUP commentAuthors BY author;
+commentorsCounts = FOREACH groupedAuthors
+    GENERATE group, COUNT(commentAuthors) AS numComments;
+
 subredditStats = FOREACH commentsBySubreddit {
     gildedComments = FILTER comments BY gilded > 0;
+
     commentAuthors = FOREACH comments GENERATE author;
     commentors = DISTINCT commentAuthors;
 
@@ -54,6 +60,6 @@ subredditStats = FOREACH commentsBySubreddit {
         -- I don't understand why using .score works, but without, it fails
         COUNT(gildedComments.score) as totalGilded,
         COUNT(comments.score) as commentCount,
-
-        commentors as commentors;
+        commentors.author as commentors;
 }
+
