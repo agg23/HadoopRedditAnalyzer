@@ -45,6 +45,21 @@ comments = FILTER comments
         AND (subreddit IS NOT NULL)
         AND (subreddit_id IS NOT NULL);
 
+comments = FOREACH comments GENERATE
+    approved_by,
+    author,
+    banned_by,
+    body,
+    body_html,
+    year,
+    month,
+    day,
+    edited,
+    gilded,
+    parent_id,
+    score,
+    subreddit_id;
+
 commentAuthors = FOREACH comments GENERATE author;
 groupedAuthors = GROUP commentAuthors BY author;
 commentorsCounts = FOREACH groupedAuthors
@@ -70,4 +85,4 @@ subredditStats = FOREACH commentsBySubreddit {
 }
 
 STORE commentsByDay INTO '$outFolder'
-    USING org.apache.pig.piggybank.storage.MultiStorage('$outFolder', '0', 'bz2', '\\t');
+    USING org.apache.pig.piggybank.storage.MultiStorage('$outFolder', '0', 'none', '');

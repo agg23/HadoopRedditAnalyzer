@@ -23,12 +23,8 @@ function generateOutput {
 
     for day in {1..31}
     do
-        hadoop fs -ls "$hiveDirectory/$day.bz2" 1> /dev/null 2> /dev/null
-        if [ "$?" -eq 0 ]
-        then
-            hadoop fs -mv "$hiveDirectory/$day.bz2/*.bz2" "$hiveDirectory/day=$day.bz2"
-            hadoop fs -rmdir "$hiveDirectory/$day.bz2/"
-        fi
+        hadoop fs -mv "$hiveDirectory/$day" "$hiveDirectory/day=$day" \
+               1> /dev/null 2> /dev/null
     done
 
     exit 0
