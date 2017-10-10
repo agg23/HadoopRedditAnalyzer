@@ -10,20 +10,31 @@ month="$2"
 hdfsDir="$3"
 
 filename="RC_$year-$month.bz2"
-hiveDirectory="$4/$year/$month"
+hiveDirectory="$4/year=$year/month=$month"
 
 function generateOutput {
-    pig -f pig/clean.pig -p inFile="$hdfsDir/$filename" -p outFolder="$hiveDirectory"
+    pig -f pig/clean.pig -p inFile="$hdfsDir/$filename" \
+        -p outFolder="$hiveDirectory"
     if [ "$?" -ne 0 ]
     then
         echo "Failed to generate output"
         exit 1
     fi
 
+    for day in {1..31}
+    do
+        hadoop fs -ls "$hiveDirectory/$day.bz2" 1> /dev/null 2> /dev/null
+        if [ "$?" -eq 0 ]
+        then
+            hadoop fs -mv "$hiveDirectory/$day.bz2/*.bz2" "$hiveDirectory/day=$day.bz2"
+            hadoop fs -rmdir "$hiveDirectory/$day.bz2/"
+        fi
+    done
+
     exit 0
 }
 
-hadoop fs -ls "$hdfsDir/$filename" > /dev/null
+hadoop fs -ls "$hdfsDir/$filename" 1> /dev/null 2> /dev/null
 
 if [ "$?" -eq 0 ]
 then

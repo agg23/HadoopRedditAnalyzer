@@ -8,7 +8,7 @@ DEFINE JsonLoader com.twitter.elephantbird.pig.load.JsonLoader('-nestedLoad');
 rawComments = LOAD '$inFile' USING JsonLoader as (json:map[]);
 
 -- Extract proper Pig schema from elephant-bird
-comments = FOREACH rawComments GENERATE1
+comments = FOREACH rawComments GENERATE
         (chararray)json#'approved_by' as approved_by,
         (chararray)json#'author' as author,
         --(chararray)json#'author_flair_css_class' as author_flair_css_class,
@@ -16,7 +16,9 @@ comments = FOREACH rawComments GENERATE1
         (chararray)json#'banned_by' as banned_by,
         (chararray)json#'body' as body,
         (chararray)json#'body_html' as body_html,
-        ToDate(1000 * (long)json#'created_utc') as created_on,        
+        (int)GetYear(ToDate(1000 * (long)json#'created_utc')) as year,
+        (int)GetMonth(ToDate(1000 * (long)json#'created_utc')) as month,
+        (int)GetDay(ToDate(1000 * (long)json#'created_utc')) as day,
         (chararray)json#'edited' as edited,
         (int)json#'gilded' as gilded,
         --(boolean)json#'likes' as likes,
@@ -48,7 +50,7 @@ groupedAuthors = GROUP commentAuthors BY author;
 commentorsCounts = FOREACH groupedAuthors
     GENERATE group, COUNT(commentAuthors) AS numComments;
 
-commentsByDay = GROUP comments BY GetDay(created_on);
+commentsByDay = GROUP comments BY day;
 
 commentsBySubreddit = GROUP comments BY (subreddit, subreddit_id);
 
