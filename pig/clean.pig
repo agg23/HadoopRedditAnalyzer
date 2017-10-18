@@ -15,8 +15,6 @@ comments = FOREACH rawComments GENERATE
         (chararray)json#'banned_by' as banned_by,
         (chararray)json#'body' as body,
         (chararray)json#'body_html' as body_html,
-        (int)GetYear(ToDate(1000 * (long)json#'created_utc')) as year,
-        (int)GetMonth(ToDate(1000 * (long)json#'created_utc')) as month,
         (int)GetDay(ToDate(1000 * (long)json#'created_utc')) as day,
         (chararray)json#'edited' as edited,
         (int)json#'gilded' as gilded,
@@ -50,8 +48,6 @@ comments = FOREACH comments GENERATE
     banned_by,
     body,
     body_html,
-    year,
-    month,
     day,
     edited,
     gilded,
@@ -91,6 +87,53 @@ SPLIT comments INTO
     day29 IF day == 29,
     day30 IF day == 30,
     day31 IF day == 31;
+
+DEFINE RemoveDay(comments) RETURNS filtered
+{
+    $filtered = FOREACH $comments GENERATE
+        approved_by,
+        author,
+        banned_by,
+        body,
+        body_html,
+        edited,
+        gilded,
+        parent_id,
+        score,
+        subreddit_id;
+};
+
+day1  = RemoveDay(day1);
+day2  = RemoveDay(day2);
+day3  = RemoveDay(day3);
+day4  = RemoveDay(day4);
+day5  = RemoveDay(day5);
+day6  = RemoveDay(day6);
+day7  = RemoveDay(day7);
+day8  = RemoveDay(day8);
+day9  = RemoveDay(day9);
+day10 = RemoveDay(day10);
+day11 = RemoveDay(day11);
+day12 = RemoveDay(day12);
+day13 = RemoveDay(day13);
+day14 = RemoveDay(day14);
+day15 = RemoveDay(day15);
+day16 = RemoveDay(day16);
+day17 = RemoveDay(day17);
+day18 = RemoveDay(day18);
+day19 = RemoveDay(day19);
+day20 = RemoveDay(day20);
+day21 = RemoveDay(day21);
+day22 = RemoveDay(day22);
+day23 = RemoveDay(day23);
+day24 = RemoveDay(day24);
+day25 = RemoveDay(day25);
+day26 = RemoveDay(day26);
+day27 = RemoveDay(day27);
+day28 = RemoveDay(day28);
+day29 = RemoveDay(day29);
+day30 = RemoveDay(day30);
+day31 = RemoveDay(day31);
 
 STORE day1  INTO '$outFolder/day=1'  USING OrcStorage();
 STORE day2  INTO '$outFolder/day=2'  USING OrcStorage();

@@ -1,16 +1,27 @@
 #!/bin/bash
-if [ "$#" -ne 4 ]
+if [ "$#" -gt 4 ] || [ "$#" -lt 2 ]
 then
-    printf "Usage:\n\tredditDownload.sh [year] [month number] [HDFS directory] [Hive directory]\n"
+    printf "Usage:\n\tredditDownload.sh [year] [month number] ([HDFS directory]) ([Hive directory])\n"
     exit 1
 fi
 
 year="$1"
 month="$2"
-hdfsDir="$3"
+if [ "$#" -gt 2 ]
+then
+    hdfsDir="$3"
+else
+    hdfsDir="/tmp/staging"
+fi
 
 filename="RC_$year-$month.bz2"
-hiveDirectory="$4/year=$year/month=$month"
+
+if [ "$#" -gt 3 ]
+then
+    hiveDirectory="$4/reddit.db/comments/year=$year/month=$month"
+else
+    hiveDirectory="/apps/hive/warehouse/reddit.db/comments/year=$year/month=$month"
+fi
 
 function generateOutput {
     pig -f pig/clean.pig -p inFile="$hdfsDir/$filename" \
@@ -21,11 +32,7 @@ function generateOutput {
         exit 1
     fi
 
-    # for day in {1..31}
-    # do
-    #     hadoop fs -mv "$hiveDirectory/$day" "$hiveDirectory/day=$day" \
-    #            1> /dev/null 2> /dev/null
-    # done
+    hive -e 'MSCK REPAIR TABLE reddit.Comments'
 
     exit 0
 }
