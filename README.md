@@ -18,20 +18,21 @@ hive -f hive/userStats.hql -hiveconf minYear=2006 -hiveconf minMonth=1 -hiveconf
 # Hive Tables
 
 Database: reddit
+
 Tables: Comments
 
 ### Comments
 
 Field | Type
 --- | ---
-approved_by | String,
-author | String,
-banned_by | String,
-body | String,
-body_html | String,
-edited | String,
-gilded | Int,
-parent_id | String,
-score | Int,
-score_hidden | Boolean,
+approved_by | String
+author | String
+banned_by | String
+body | String
+body_html | String
+edited | String
+gilded | Int
+parent_id | String
+score | Int
+score_hidden | Boolean
 subreddit_id | String
