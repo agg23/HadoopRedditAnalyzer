@@ -23,6 +23,8 @@ else
     hiveDirectory="/apps/hive/warehouse/reddit.db/comments/year=$year/month=$month"
 fi
 
+hadoop fs -mkdir -p "$hdfsDir"
+
 function generateOutput {
     pig -f pig/clean.pig -p inFile="$hdfsDir/$filename" \
         -p outFolder="$hiveDirectory"
