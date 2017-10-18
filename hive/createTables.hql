@@ -1,4 +1,7 @@
-CREATE TABLE Comments (
+CREATE DATABASE IF NOT EXISTS reddit;
+USE reddit;
+
+CREATE TABLE IF NOT EXISTS Comments (
       approved_by STRING,
       author STRING,
       banned_by STRING,
