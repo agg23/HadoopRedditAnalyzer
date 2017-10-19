@@ -43,6 +43,15 @@ comments = FILTER comments
         AND (subreddit IS NOT NULL)
         AND (subreddit_id IS NOT NULL);
 
+reddits = FOREACH comments GENERATE
+    subreddit_id AS id,
+    subreddit AS name;
+
+reddits = GROUP reddits BY (id, name);
+reddits = FOREACH reddits GENERATE group.id AS id, group.name AS name;
+
+STORE reddits INTO '$outFolder/../../../subreddits/' USING OrcStorage();
+
 comments = FOREACH comments GENERATE
     approved_by,
     author,

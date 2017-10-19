@@ -34,6 +34,7 @@ function generateOutput {
         exit 1
     fi
 
+    hive -e 'MSCK REPAIR TABLE reddit.Subreddits'
     hive -e 'MSCK REPAIR TABLE reddit.Comments'
 
     exit 0
