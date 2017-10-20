@@ -49,7 +49,6 @@ edited | String
 gilded | Int
 parent_id | String
 score | Int
-score_hidden | Boolean
 subreddit_id | String
 
 ### Subreddits
