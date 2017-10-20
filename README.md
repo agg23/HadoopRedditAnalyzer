@@ -20,6 +20,11 @@ Get the n users with the highest and lowest average and total karma:
 hive -f hive/karmaFinder.hql -hiveconf user_count=10
 ```
 
+Get user specific stats, total and divided by subreddit:
+```
+hive -f hive/lookupUser.hql -hiveconf user="paulgraham" -hiveconf subreddit_count=10
+```
+
 # Hive Tables
 
 Database: reddit
