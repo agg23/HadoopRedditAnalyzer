@@ -25,6 +25,11 @@ Get user specific stats, total and divided by subreddit:
 hive -f hive/lookupUser.hql -hiveconf user="paulgraham" -hiveconf subreddit_count=10
 ```
 
+Get subreddit specific stats, total and divided by user:
+```
+hive -f hive/lookupSubreddit.hql -hiveconf subreddit_id="t5_6" -hiveconf user_count=10
+```
+
 # Hive Tables
 
 Database: reddit
