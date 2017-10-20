@@ -15,7 +15,7 @@ Generate user stats:
 hive -f hive/userStats.hql -hiveconf minYear=2006 -hiveconf minMonth=1 -hiveconf minDay=0 -hiveconf maxYear=2007 -hiveconf maxMonth=12 -hiveconf maxDay=32
 ```
 
-Get the n users with the highest and lowest average karma:
+Get the n users with the highest and lowest average and total karma:
 ```
 hive -f hive/karmaFinder.hql -hiveconf user_count=10
 ```
