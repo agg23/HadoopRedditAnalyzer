@@ -1,52 +1,57 @@
 #!/bin/bash
 if [ "$#" -gt 4 ] || [ "$#" -lt 2 ]
 then
-    printf "Usage:\n\tredditDownload.sh [year] [month number] ([HDFS directory]) ([Hive directory])\n"
-    exit 1
+	printf "Usage:\n\tredditDownload.sh [year] [month number] ([HDFS directory]) ([Hive directory])\n"
+	exit 1
 fi
 
 year="$1"
 month="$2"
 if [ "$#" -gt 2 ]
 then
-    hdfsDir="$3"
+	hdfsDir="$3"
 else
-    hdfsDir="/tmp/staging"
+	hdfsDir="/tmp/staging"
 fi
 
 filename="RC_$year-$month.bz2"
 
 if [ "$#" -gt 3 ]
 then
-    hiveDirectory="$4/reddit.db/comments/year=$year/month=$month"
+	hiveDirectory="$4/reddit.db/comments/year=$year/month=$month"
 else
-    hiveDirectory="/apps/hive/warehouse/reddit.db/comments/year=$year/month=$month"
+	hiveDirectory="/apps/hive/warehouse/reddit.db/comments/year=$year/month=$month"
 fi
+
+subredditDirectory="/tmp/subreddits"
+
+# Remove temporary directory for the join of subreddit data
+hadoop fs -rm -R -f "$subredditDirectory"
 
 hadoop fs -mkdir -p "$hdfsDir"
 
 function generateOutput {
-    pig -f pig/clean.pig -p inFile="$hdfsDir/$filename" \
-        -p outFolder="$hiveDirectory"
-    if [ "$?" -ne 0 ]
-    then
-        echo "Failed to generate output"
-        exit 1
-    fi
+	pig -f pig/clean.pig -p inFile="$hdfsDir/$filename" \
+		-p outFolder="$hiveDirectory" -p subredditFolder="$subredditDirectory"
+	if [ "$?" -ne 0 ]
+	then
+		echo "Failed to generate output"
+		exit 1
+	fi
 
-    hive -e 'MSCK REPAIR TABLE reddit.Subreddits'
-    hive -e 'MSCK REPAIR TABLE reddit.Comments'
+	hive -f hive/preprocessSubreddits.hql -hiveconf subredditsInput="$subredditDirectory"
+	hive -e 'MSCK REPAIR TABLE reddit.Comments'
 
-    exit 0
+	exit 0
 }
 
 hadoop fs -ls "$hdfsDir/$filename" 1> /dev/null 2> /dev/null
 
 if [ "$?" -eq 0 ]
 then
-    # File exists; don't re-download
-    generateOutput
-    exit "$?"
+	# File exists; don't re-download
+	generateOutput
+	exit "$?"
 fi
 
 mkdir tmp
@@ -78,10 +83,11 @@ fileChecksum=$(sha256sum tmp/$filename | cut -d " " -f 1)
 
 if [ "$providedChecksum" != "$fileChecksum" ]
 then
-    echo "Invalid checksum"
-   exit 1
+	echo "Invalid checksum"
+	rm tmp/$filename
+	exit 1
 else
-    echo "Checksum validated. Uploading to HDFS"
+	echo "Checksum validated. Uploading to HDFS"
 fi
 
 hadoop fs -put "tmp/$filename" "$hdfsDir/$filename"

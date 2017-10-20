@@ -50,7 +50,7 @@ reddits = FOREACH comments GENERATE
 reddits = GROUP reddits BY (id, name);
 reddits = FOREACH reddits GENERATE group.id AS id, group.name AS name;
 
-STORE reddits INTO '$outFolder/../../../subreddits/' USING OrcStorage();
+STORE reddits INTO '$subredditFolder' USING OrcStorage();
 
 comments = FOREACH comments GENERATE
     approved_by,
