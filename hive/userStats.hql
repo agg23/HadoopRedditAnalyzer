@@ -3,16 +3,31 @@ USE reddit;
 -- Get overall subreddit stats
 -- For whatever reason won't let you indent
 
-CREATE TEMPORARY TABLE FilteredComments AS
+CREATE VIEW FilteredComments AS
 SELECT * FROM Comments
-    WHERE year >= ${hiveconf:minYear}
-    AND month >= ${hiveconf:minMonth}
-    AND day >= ${hiveconf:minDay}
-    AND year <= ${hiveconf:maxYear}
-    AND month <= ${hiveconf:maxMonth}
-    AND day < ${hiveconf:maxDay};
+    WHERE DATE(CONCAT(year, '-', month, '-', day))
+            >= DATE(CONCAT(${hiveconf:minYear}, '-',
+                           ${hiveconf:minMonth}, '-',
+                           ${hiveconf:minDay}))
+      AND DATE(CONCAT(year, '-', month, '-', day))
+            <= DATE(CONCAT(${hiveconf:maxYear}, '-',
+                           ${hiveconf:maxMonth}, '-',
+                           ${hiveconf:maxDay}));
 
-SELECT COUNT(*), COUNT(DISTINCT author), SUM(score), SUM(gilded), SUM(controversiality) FROM filteredComments;
+SELECT COUNT(*),
+       COUNT(DISTINCT author),
+       SUM(score),
+       SUM(gilded),
+       SUM(controversiality)
+    FROM FilteredComments;
 
 -- Get individual user stats
-SELECT author, COUNT(*), SUM(score), SUM(gilded), SUM(controversiality) FROM filteredComments GROUP BY author;
+SELECT author,
+       COUNT(*),
+       SUM(score),
+       SUM(gilded),
+       SUM(controversiality)
+    FROM FilteredComments
+    GROUP BY author;
+
+DROP VIEW FilteredComments;
