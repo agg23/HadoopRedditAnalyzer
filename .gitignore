@@ -1,3 +1,4 @@
 **/pig_*.log
 tmp/
 *~
+*.class
