@@ -57,3 +57,16 @@ Field | Type
 --- | ---
 id | String
 name | String
+
+# Oozie Pipelines
+
+## Distances
+1. Find most popular `n` subreddits using a Hive query.
+2. For each of these most popular subreddits, generate an author table
+   using many Hive queries. (These tables have auto-generated names
+   and will be deleted at the end of the pipeline.)
+3. For each unique pair of these author tables, run a distance query
+   to find the size of their union and intersection.
+4. Run a quick shell script that takes the difference between the
+   union and intersection (to get the XOR distance), adds on the names
+   of the subreddits, and appends the result to an output file.
