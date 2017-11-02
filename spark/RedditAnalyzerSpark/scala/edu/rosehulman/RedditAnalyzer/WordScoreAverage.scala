@@ -27,8 +27,56 @@ object WordScoreAverage {
     val words = wordStats.as[(String, BigInt, Double)].collect()
     
     val testComment = "Hello. I am an expert in computers and work in big data"
-    val splitComment = testComment.toLowerCase().replaceAll("\\.", " ").split(" ").map((word: String) => word.replaceAll("\\W", ""))
     
+    
+//    if(splitCommentFrequencyIndex != splitComment.length) {
+//      // Not all words were in database
+//    }
+    println(commentIndicies(words, testComment).deep.mkString("\n"))
+    
+    wordStats.show()
+    
+    val layers = Array[Int](3, 10, 10, 1)
+    val trainer = new MultilayerPerceptronClassifier().setLayers(layers)
+  }
+   
+   def commentIndicies(words: Array[(String, BigInt, Double)], comment: String): Array[Int] = {
+    val commentFrequencyTuple = commentFrequency(words, comment)
+    val sortedCommentFrequency = commentFrequencyTuple._1
+    val splitCommentFrequencyIndex = commentFrequencyTuple._2
+    
+    var indicies = new Array[Int](NETWORK_WORD_COUNT)
+    for(i <- 0 until indicies.length) {
+      // Fill indicies with 0
+      indicies(i) = 0
+    }
+    
+    println(f"$splitCommentFrequencyIndex%d words found from comment in subreddit dictionary")
+        
+    if(splitCommentFrequencyIndex < NETWORK_WORD_COUNT) {
+      // All words are passed into the network
+      for(i <- 0 until splitCommentFrequencyIndex) {
+        indicies(i) = sortedCommentFrequency(i)._3
+      }
+    } else {
+      for(i <- 0 until NETWORK_WORD_COUNT/2) {
+        // Select highest frequency n/2
+        indicies(i) = sortedCommentFrequency(i)._3
+        
+        // Select lowest frequency n/2
+        indicies(NETWORK_WORD_COUNT - 1 - i) = sortedCommentFrequency(splitCommentFrequencyIndex - 1 - i)._3
+      }
+    }
+    
+    println(sortedCommentFrequency.deep.mkString("\n"))
+    println(indicies.deep.mkString("\n"))
+    
+    return indicies
+   }
+   
+   def commentFrequency(words: Array[(String, BigInt, Double)], comment: String): (Array[(String, BigInt, Int)], Int) = {
+    val splitComment = comment.toLowerCase().replaceAll("\\.", " ").split(" ").map((word: String) => word.replaceAll("\\W", ""))
+     
     var splitCommentFrequencyIndex = 0
     // Word, Frequency, Overall word index
     var splitCommentFrequency = new Array[(String, BigInt, Int)](splitComment.length)
@@ -37,8 +85,7 @@ object WordScoreAverage {
     for(i <- 0 until splitCommentFrequency.length) {
       splitCommentFrequency(i) = ("", 0, 0)
     }
-    
-    var indicies = new Array[Int](NETWORK_WORD_COUNT)
+        
     for(i <- 0 until words.length) {
       val row = words(i)
       val word = row._1
@@ -57,21 +104,10 @@ object WordScoreAverage {
       }
     }
     
-//    if(splitCommentFrequencyIndex != splitComment.length) {
-//      // Not all words were in database
-//    }
-    
-    println(f"$splitCommentFrequencyIndex%d words found from comment in subreddit dictionary")
-    
     val sortedCommentFrequency = splitCommentFrequency.sortWith {(lhs, rhs) =>
       lhs._2 > rhs._2
     }
     
-    println(sortedCommentFrequency.deep.mkString("\n"))
-    
-    wordStats.show()
-    
-    val layers = Array[Int](3, 10, 10, 1)
-    val trainer = new MultilayerPerceptronClassifier().setLayers(layers)
-  }
+    return (sortedCommentFrequency, splitCommentFrequencyIndex)
+   }
 }
