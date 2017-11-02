@@ -1,6 +1,6 @@
 USE reddit;
 
-SELECT AllSubreddits.name, COUNT(*)
+SELECT AllSubreddits.name, COUNT(*) AS ct
     FROM Comments AS AllComments, Subreddits AS AllSubreddits
     WHERE AllComments.author IN (SELECT SubComments.author
                                      FROM Comments AS SubComments,
@@ -9,4 +9,5 @@ SELECT AllSubreddits.name, COUNT(*)
                                        AND Subreddit.name = '${hiveconf:subreddit}')
       AND AllSubreddits.id = AllComments.subreddit_id
       AND AllSubreddits.name <> '${hiveconf:subreddit}'
-    GROUP BY AllSubreddits.name;
+    GROUP BY AllSubreddits.name
+    ORDER BY ct;
