@@ -7,10 +7,13 @@ CREATE TEMPORARY TABLE MostPopular (
     STORED AS ORC;
 
 INSERT OVERWRITE TABLE MostPopular
-    SELECT name, COUNT(*) AS commentCount
+    SELECT name,
+           COUNT(*) AS commentCount
         FROM Comments, Subreddits
         WHERE subreddit_id = id
           AND name <> 'reddit.com'
+          AND DATE(CONCAT(year, '-', month, '-', day)) >= DATE('${hiveconf:minDate}')
+          AND DATE(CONCAT(year, '-', month, '-', day)) <= DATE('${hiveconf:maxDate}')
         GROUP BY name
         ORDER BY commentCount DESC
         LIMIT ${hiveconf:count};
@@ -25,6 +28,8 @@ INSERT OVERWRITE TABLE Authors
     SELECT DISTINCT Subreddits.name AS subreddit, author AS commenter
         FROM Comments, Subreddits, MostPopular
         WHERE subreddit_id = id
+          AND DATE(CONCAT(year, '-', month, '-', day)) >= DATE('${hiveconf:minDate}')
+          AND DATE(CONCAT(year, '-', month, '-', day)) <= DATE('${hiveconf:maxDate}')
           AND (Subreddits.name = MostPopular.name
                OR Subreddits.name = '${hiveconf:name}');
 
