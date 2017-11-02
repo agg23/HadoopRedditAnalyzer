@@ -17,7 +17,8 @@ CREATE TABLE Authors
     AS SELECT DISTINCT Subreddits.name AS subreddit, author AS commenter
           FROM Comments, Subreddits, MostPopular
           WHERE subreddit_id = id
-            AND Subreddits.name = MostPopular.name;
+            AND (Subreddits.name = MostPopular.name
+                 OR Subreddits.name = '${hiveconf:name}');
 
 DROP TABLE UnionSizes;
 DROP TABLE IntersectSizes;
