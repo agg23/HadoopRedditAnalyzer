@@ -1,5 +1,9 @@
 USE reddit;
 
+----------------------------------------
+-- Find the top <count> subreddits    --
+-- by the number of comments on them. --
+----------------------------------------
 CREATE TEMPORARY TABLE MostPopular (
         name STRING,
         commentCount INT
@@ -18,6 +22,11 @@ INSERT OVERWRITE TABLE MostPopular
         ORDER BY commentCount DESC
         LIMIT ${hiveconf:count};
 
+
+-------------------------------------
+-- Stores all commenters with each --
+-- subreddit they comment on.      --
+-------------------------------------
 CREATE TEMPORARY TABLE Authors (
         subreddit STRING,
         commenter STRING
@@ -33,6 +42,11 @@ INSERT OVERWRITE TABLE Authors
           AND (Subreddits.name = MostPopular.name
                OR Subreddits.name = '${hiveconf:name}');
 
+
+----------------------------------------
+-- Gets the sizes of the intersection --
+-- between each pair of subreddits.   --
+----------------------------------------
 DROP TABLE IntersectSizes;
 
 CREATE TABLE IntersectSizes (
@@ -42,6 +56,8 @@ CREATE TABLE IntersectSizes (
     )
     STORED AS ORC;
 
+-- Note the "less than" which allows us to get
+--   non-symmetric, non-reflexive pairs.
 INSERT OVERWRITE TABLE IntersectSizes
     SELECT firstAuthors.subreddit AS firstSubreddit,
            secondAuthors.subreddit AS secondSubreddit,
@@ -52,6 +68,10 @@ INSERT OVERWRITE TABLE IntersectSizes
           AND firstAuthors.commenter = secondAuthors.commenter
         GROUP BY firstAuthors.subreddit, secondAuthors.subreddit;
 
+------------------------------------------
+-- Gets the "distance" between two      --
+-- subreddits as the size of their XOR. --
+------------------------------------------
 DROP TABLE ExclusiveSizes;
 
 CREATE TABLE ExclusiveSizes (
@@ -61,6 +81,13 @@ CREATE TABLE ExclusiveSizes (
     )
     STORED AS ORC;
 
+-- We need the MAX to aggregate together the intersectSize,
+--   even though there's only one value.
+-- The normal way to find the XOR would use the Union instead of
+--   the individual sizes, but after some complexity analysis, that
+--   is cubic while this is squared complexity.
+-- We match up the first and second authors to the intersect's
+--   subreddits solely so we can get their counts (is there a better way?).
 INSERT OVERWRITE TABLE ExclusiveSizes
     SELECT firstAuthors.subreddit AS firstSubreddit,
            secondAuthors.subreddit AS secondSubreddit,
