@@ -30,6 +30,11 @@ Get subreddit specific stats, total and divided by user:
 hive -f hive/lookupSubreddit.hql -hiveconf subreddit_id="t5_6" -hiveconf user_count=10
 ```
 
+Get estimated score for a comment in a subreddit (example /r/programming):
+```
+spark-submit --class edu.rosehulman.RedditAnalyzer.WordScorePredictor --master yarn --driver-memory 4g --executor-memory 3g --executor-cores 1 RedditAnalyzerSpark-0.0.1-SNAPSHOT.jar "t5_2fwo" "This is the comment I want to test"
+```
+
 # Hive Tables
 
 Database: reddit
