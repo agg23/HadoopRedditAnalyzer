@@ -8,37 +8,56 @@ import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 import scala.util.control.Breaks._
 import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.ml.regression.LinearRegression
+import org.apache.spark.sql.hive.HiveContext
 
-object WordScoreAverage {
+object WordScorePredictor {
+   val COMMENT_LIMIT = 100000
    val TRAINING_COMMENT_COUNT = 2000
    val NETWORK_WORD_COUNT = 20
   
   def main(args: Array[String]): Unit = {
-    val spark = SparkSession.builder().master("local").appName("WordAverageScore").getOrCreate()
+    var subreddit = ""
+    var comment = ""
+    if(args.length == 1) {
+      subreddit = ""
+      comment = args(0)
+    } else if(args.length == 2) {
+      subreddit = args(0)
+      comment = args(1)
+    } else {
+      println("Usage: wordscore (subreddit) [comment]")
+    }
+     
+//    val spark = SparkSession.builder().master("local").appName("WordScorePredictor").getOrCreate()
+    // Config for use in spark-submit
+    val spark = SparkSession.builder().appName("WordScorePredictor").config("spark.sql.warehouse.dir", "/apps/hive/warehouse").enableHiveSupport().getOrCreate()
     
     import spark.implicits._
     
-    val rows = spark.read.orc("/Users/adam/Documents/01-9-2006.orc")
-    val bodyRows = rows.select("body", "score")
+    println("Initialization complete. Selecting rows")
+    
+    spark.sql("USE Reddit")
+    
+    var rows = if(subreddit != "") spark.sql(s"SELECT body, score FROM Comments WHERE subreddit_id == '$subreddit'") else spark.sql("SELECT body, score FROM Comments")
+    
+//    val rows = spark.read.orc("/Users/adam/Documents/01-9-2006.orc")
+    val bodyRows = rows.select("body", "score").limit(COMMENT_LIMIT)
         
     val dataset = bodyRows.as[(String, Int)]
+    // Map words to their scores
     val wordsToScores = dataset.flatMap {
       case (body: String, score: Int) => body.toLowerCase().replaceAll("\\.", " ").split(" ").map((word: String) => (word.replaceAll("\\W", ""), score))
     }.toDF("word", "score")
     
+    // Count the frequency of words, and aggregate their scores
     val wordStats = wordsToScores.filter {(row: Row) => row.getString(0) != ""}.groupBy("word").agg(count("word"), mean("score"))
-    val words = wordStats.as[(String, BigInt, Double)].collect()
+    val wordsDataset = wordStats.as[(String, BigInt, Double)]
+    
+//    wordsDataset.write.format("csv").save("/tmp/spark/words")
+    
+    val words = wordsDataset.collect()
     
     // Get n comments for training the network
-//    val trainingComments = dataset.limit(TRAINING_COMMENT_COUNT).collect()
-//    var trainingIndicies = new Array[Array[Int]](TRAINING_COMMENT_COUNT)
-//    var trainingScores = new Array[Int](TRAINING_COMMENT_COUNT)
-//    for(i <- 0 until trainingComments.length) {
-//      val row = trainingComments(i)
-//      trainingIndicies(i) = commentIndicies(words, row._1)
-//      trainingScores(i) = row._2
-//    }
-    
     val trainingComments = dataset.limit(TRAINING_COMMENT_COUNT).map { case (body: String, score: Int) => 
       val splitWords = body.toLowerCase().replaceAll("\\.", " ").split(" ")
       
@@ -59,17 +78,12 @@ object WordScoreAverage {
     
     transformedTrainingComments.show()
       
-//    val layers = Array[Int](1, 1, 1, 1)
     val trainer = new LinearRegression().setFeaturesCol("features").setLabelCol("_1")
     
     val model = trainer.fit(transformedTrainingComments)
     
     println("Training completed")
-    
-//    model.transform(dataset)
-    
-    val comment = "Hello. I am an expert in computers and work in big data"
-    
+        
     val formattedCommentTuple = commentIndicies(words, comment) match {
       case Array(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t) => (0, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t)
     }
@@ -80,14 +94,10 @@ object WordScoreAverage {
     
     transformedCommentDataset.show()
     
-    model.transform(transformedCommentDataset).show()
+    val finalResult = model.transform(transformedCommentDataset)
+    finalResult.show()
     
-//    if(splitCommentFrequencyIndex != splitComment.length) {
-//      // Not all words were in database
-//    }
-//    println(commentIndicies(words, testComment).deep.mkString("\n"))
-    
-//    wordStats.show()
+    finalResult.select("prediction").write.format("csv").save("/tmp/spark/output")
   }
    
    def commentIndicies(words: Array[(String, BigInt, Double)], comment: String): Array[Int] = {
